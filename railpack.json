@@ -1,0 +1,9 @@
+{
+  "provider": "python",
+  "packages": {
+    "python": "3.11"
+  },
+  "deploy": {
+    "startCommand": "gunicorn run:app"
+  }
+}
