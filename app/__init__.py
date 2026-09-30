@@ -37,6 +37,14 @@ def create_app():
     app.register_blueprint(dashboard_bp)
     app.register_blueprint(sync_bp)
 
+    @app.route("/")
+    def index():
+        from flask import redirect, url_for
+        from flask_login import current_user
+        if current_user.is_authenticated:
+            return redirect(url_for("dashboard.home"))
+        return redirect(url_for("auth.login"))
+
     @login_manager.user_loader
     def load_user(user_id):
         return User.query.get(int(user_id))
