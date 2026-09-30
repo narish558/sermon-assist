@@ -9,7 +9,14 @@ import os
 import json
 from groq import Groq
 
-client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
+_client = None
+
+def _get_client():
+    """Lazy-init so a missing/bad Groq setup can't crash the whole app at startup."""
+    global _client
+    if _client is None:
+        _client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
+    return _client
 MODEL = os.environ.get("GROQ_MODEL", "llama-3.3-70b-versatile")
 
 NOTES_SYSTEM_PROMPT = """You are assisting a church note-taking system.
