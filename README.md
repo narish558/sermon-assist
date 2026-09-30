@@ -3,12 +3,33 @@
 A SaaS for churches: offline scripture projection + fuzzy quote matching
 + AI-generated sermon notes (via Groq).
 
-## Architecture recap
-- **Local client** (runs on a laptop at the church): offline speech-to-text
-  + offline Bible matching. Works with zero internet.
-- **Cloud backend** (Flask on Render): accounts, billing (Paystack),
-  sermon archive, and Groq-powered note summarization. The local client
-  syncs to this whenever it has a connection — nothing is lost offline.
+## Architecture recap (updated — now fully online)
+Everything now runs in one deployed Flask app:
+- **Scripture lookup + projection** (`/present/control`, `/present/stage`):
+  the operator's browser captures speech using the Web Speech API (built
+  into Chrome/Edge — no install, no offline model), sends recognized text
+  to the server, which matches it against the Bible database and updates
+  what's projected. Automation applies **only** to this — deciding
+  whether a verse gets shown. It never touches notes.
+- **Sermon notes**: unchanged — generated once, after the service, by
+  Groq, when a sermon transcript is uploaded via `/api/sync/sermon`.
+- **Billing, accounts, archive**: unchanged.
+
+The original offline local-client (Whisper + on-device matching) still
+exists under `local-client/` if you ever want a no-internet fallback for
+a venue with unreliable WiFi — but the primary path now is fully online,
+inside the same app you already have deployed.
+
+## One extra setup step: bundle the Bible database
+The matching engine needs `app/bible.db` to exist (the previous section
+never required this since it lived only in the offline client):
+```bash
+cd local-client
+python build_bible_db.py kjv.txt KJV
+cp bible.db ../app/bible.db
+```
+Commit `app/bible.db` to your repo (it's a few MB, fine for git) so it
+deploys along with the rest of the app.
 
 ## Step 1 — Get the pieces you need
 1. A [Groq API key](https://console.groq.com) — free tier, sign up and generate a key.
