@@ -32,6 +32,13 @@
 </div>
 
 <div class="card">
+  <h3 style="margin-top:0;">Search &amp; project manually</h3>
+  <input type="text" id="manual-input" placeholder="e.g. John 3:16" style="width:70%;display:inline-block;">
+  <button class="btn" onclick="manualSearch()">Search &amp; project</button>
+  <div class="note" id="manual-error" style="color:#c0392b;"></div>
+</div>
+
+<div class="card">
   <h3 style="margin-top:0;">Detected scripture</h3>
   <div id="match-area"><div class="empty">No match pending.</div></div>
 </div>
@@ -54,6 +61,17 @@ $('pill-assisted').onclick = () => setMode('assisted');
 $('pill-autonomous').onclick = () => setMode('autonomous');
 $('version-select').onchange = e => fetch('/present/api/version', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({version:e.target.value})});
 $('clear-btn').onclick = () => fetch('/present/api/clear', {method:'POST'});
+function manualSearch(){
+  const query = $('manual-input').value.trim();
+  if (!query) return;
+  fetch('/present/api/manual', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({query})})
+    .then(r => r.json())
+    .then(s => {
+      $('manual-error').textContent = s.manual_error || '';
+      if (!s.manual_error) $('manual-input').value = '';
+      render();
+    });
+}
 function approve(){ fetch('/present/api/approve', {method:'POST'}).then(render); }
 function dismiss(){ fetch('/present/api/dismiss', {method:'POST'}).then(render); }
 

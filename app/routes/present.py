@@ -93,6 +93,25 @@ def clear():
     return jsonify(_state())
 
 
+@present_bp.route("/api/manual", methods=["POST"])
+@login_required
+def manual_lookup():
+    """Operator types a reference directly and projects it immediately —
+    bypasses speech/confidence entirely, since a human typed it on purpose."""
+    query = request.json.get("query", "")
+    s = _state()
+    match = lookup_reference(query, version=s["version"])
+    if not match:
+        return jsonify({**s, "manual_error": "Couldn't find that reference. Try e.g. 'John 3:16'."})
+
+    s["projected"] = {
+        "reference": match.reference, "version": match.version,
+        "text": match.text, "confidence": 1.0,
+    }
+    s["pending_match"] = None
+    return jsonify(s)
+
+
 @present_bp.route("/api/process", methods=["POST"])
 @login_required
 def process_speech():

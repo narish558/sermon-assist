@@ -40,17 +40,29 @@ REFERENCE_PATTERN = re.compile(
     r"\b([1-3]?\s?[A-Za-z]+)\s+(\d{1,3})[:\.](\d{1,3})(?:-(\d{1,3}))?\b"
 )
 
+# Matches how references actually get SPOKEN, e.g. "John chapter 10 verse 30",
+# "First Corinthians chapter 13 verse 4" — no colon, since nobody says one aloud.
+SPOKEN_REFERENCE_PATTERN = re.compile(
+    r"\b([1-3]?\s?[A-Za-z]+)\s+chapter\s+(\d{1,3})\s+verse\s+(\d{1,3})\b",
+    re.IGNORECASE,
+)
+
 
 def _connect():
     return sqlite3.connect(DB_PATH)
 
 
 def lookup_reference(text: str, version: str = "KJV") -> VerseMatch | None:
-    """Feature 1: pastor gives an explicit reference like 'Romans 8:28'."""
+    """Feature 1: pastor gives an explicit reference, spoken or typed —
+    'Romans 8:28' or 'Romans chapter 8 verse 28' both work."""
     match = REFERENCE_PATTERN.search(text)
-    if not match:
-        return None
-    book, chapter, verse_start, verse_end = match.groups()
+    if match:
+        book, chapter, verse_start, verse_end = match.groups()
+    else:
+        match = SPOKEN_REFERENCE_PATTERN.search(text)
+        if not match:
+            return None
+        book, chapter, verse_start = match.groups()
 
     conn = _connect()
     cur = conn.cursor()
