@@ -12,16 +12,22 @@
 <body>
   <div class="stage" id="stage"><div class="empty">Screen idle — no scripture projected</div></div>
 <script>
+const CHURCH_ID = {{ church_id }};
+
 async function render(){
-  const res = await fetch('/present/api/state');
-  const s = await res.json();
-  const el = document.getElementById('stage');
-  if (s.projected) {
-    el.innerHTML = `<div class="verse">"${s.projected.text}"</div>
-      <div class="ref">${s.projected.reference}</div>
-      <div class="version">${s.projected.version}</div>`;
-  } else {
-    el.innerHTML = `<div class="empty">Screen idle — no scripture projected</div>`;
+  try {
+    const res = await fetch(`/present/api/state/public/${CHURCH_ID}`);
+    const s = await res.json();
+    const el = document.getElementById('stage');
+    if (s.projected) {
+      el.innerHTML = `<div class="verse">"${s.projected.text}"</div>
+        <div class="ref">${s.projected.reference}</div>
+        <div class="version">${s.projected.version}</div>`;
+    } else {
+      el.innerHTML = `<div class="empty">Screen idle — no scripture projected</div>`;
+    }
+  } catch (e) {
+    // network hiccup — keep last shown content, try again next tick
   }
 }
 setInterval(render, 1000);

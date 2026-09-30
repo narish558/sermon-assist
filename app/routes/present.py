@@ -44,7 +44,28 @@ def control():
 @present_bp.route("/stage")
 @login_required
 def stage():
-    return render_template("present_stage.html")
+    """Convenience redirect for the operator, who IS logged in — sends
+    them to their own church's public stage link."""
+    from flask import redirect, url_for
+    return redirect(url_for("present.stage_public", church_id=current_user.church_id))
+
+
+@present_bp.route("/stage/<int:church_id>")
+def stage_public(church_id):
+    """Public, no-login page — this is what actually runs on the
+    projector's browser, which obviously can't log in to your account."""
+    return render_template("present_stage.html", church_id=church_id)
+
+
+@present_bp.route("/api/state/public/<int:church_id>")
+def api_state_public(church_id):
+    """Public read-only state for the stage screen. Only ever exposes
+    the currently projected verse — never the transcript or anything
+    else from the operator's control screen."""
+    s = state_store.get(church_id)
+    if not s:
+        return jsonify({"projected": None})
+    return jsonify({"projected": s["projected"]})
 
 
 @present_bp.route("/api/state")
