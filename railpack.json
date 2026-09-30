@@ -3,7 +3,7 @@
   "packages": {
     "python": "3.11"
   },
-  "deploy": {
-    "startCommand": "gunicorn run:app"
+    "deploy": {
+    "startCommand": "flask --app run.py db upgrade && gunicorn run:app"
   }
 }

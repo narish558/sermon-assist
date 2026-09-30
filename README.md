@@ -68,28 +68,35 @@ print(lookup_reference("Turn with me to John 3:16"))
 print(fuzzy_match_quote("I can do all things through Christ which strengtheneth me"))
 ```
 
-## Step 7 — Wire up live speech-to-text
-The local client needs a streaming STT loop. `pywhispercpp` runs
-Whisper fully offline. Skeleton:
+## Step 7 — Run the control + projection screens
+`local_server.py` is a small local Flask server with two pages:
+- **`/control`** — operator screen (skip entirely in autonomous mode): live
+  transcript, a detected-verse approval card, version switcher, clear button
+- **`/stage`** — the clean projection screen, opened fullscreen on the
+  projector's display/browser
 
+Both poll an in-memory `state` dict once a second — no websockets, no cloud
+call, nothing leaves the building. **Automation applies only to scripture
+detection/projection.** Sermon notes are never generated live; they're
+produced once, after the service, when Step 8 syncs the transcript to the
+cloud (Groq runs there, not on this local server).
+
+```bash
+cd local-client
+python local_server.py
+# Operator device: http://<this-device-local-ip>:5001/control
+# Projector browser (fullscreen):  http://<this-device-local-ip>:5001/stage
+```
+
+Wire real speech-to-text into it with `pywhispercpp` (fully offline):
 ```python
 from pywhispercpp.model import Model
-from bible_matcher import lookup_reference, fuzzy_match_quote, should_auto_project
+from local_server import on_transcribed_chunk
 
 model = Model('base.en')  # downloads once, then fully offline
-
-def on_transcribed_chunk(text: str):
-    ref_match = lookup_reference(text)
-    if ref_match:
-        project(ref_match)          # explicit reference -> always safe to show
-        return
-
-    for match in fuzzy_match_quote(text):
-        if should_auto_project(match):   # only in autonomous mode
-            project(match)
-        # else: log it for the optional supervisor view, don't display
-
-# model.transcribe(...) streaming loop feeds chunks into on_transcribed_chunk
+# feed each transcribed chunk into on_transcribed_chunk(text) as it arrives —
+# that's the ONLY automated decision point in the app, and it only ever
+# decides whether to show a verse, never anything about notes.
 ```
 
 ## Step 8 — Sync to the cloud after each service
