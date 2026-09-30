@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card">
+  <strong>{{ church.name }}</strong> — plan: <span class="verse-badge">{{ church.plan }}</span>
+  — status: {{ church.subscription_status }}
+</div>
+
+<h3>Sermon archive</h3>
+{% for sermon in sermons %}
+  <a href="{{ url_for('dashboard.sermon_detail', sermon_id=sermon.id) }}" style="text-decoration:none;color:inherit;">
+    <div class="card">
+      <strong>{{ sermon.title }}</strong><br>
+      <small>{{ sermon.preached_at.strftime('%d %b %Y') }}</small>
+    </div>
+  </a>
+{% else %}
+  <p>No sermons synced yet. Run the local client at your next service — it uploads automatically once online.</p>
+{% endfor %}
+{% endblock %}

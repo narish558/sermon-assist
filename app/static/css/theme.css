@@ -1,0 +1,79 @@
+/* This file reads brand colors injected as CSS variables in base.html
+   (from app/config.py BRAND_PRIMARY / BRAND_ACCENT). Once you drop in
+   DranyTech's real logo hex codes in config.py, the whole app restyles
+   automatically — nothing else needs to change. */
+
+:root {
+  --brand-primary: var(--injected-primary, #0F4C3A);
+  --brand-accent: var(--injected-accent, #C9A45F);
+  --ink: #1c1c1c;
+  --bg: #faf9f6;
+  --panel: #ffffff;
+  --line: #e4e0d4;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: -apple-system, "Segoe UI", Arial, sans-serif;
+}
+
+.navbar {
+  background: var(--brand-primary);
+  color: #fff;
+  padding: 14px 28px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.navbar .brand { font-weight: 600; font-size: 1.05rem; }
+.navbar a { color: #fff; text-decoration: none; opacity: 0.85; margin-left: 18px; }
+
+.container { max-width: 960px; margin: 0 auto; padding: 32px 20px; }
+
+.card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 22px 24px;
+  margin-bottom: 16px;
+}
+
+.btn {
+  display: inline-block;
+  background: var(--brand-primary);
+  color: #fff;
+  padding: 10px 18px;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  font-size: 0.9rem;
+  text-decoration: none;
+}
+
+.btn.accent { background: var(--brand-accent); color: #1c1c1c; }
+
+.plan-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.plan-grid .card.selected { border-color: var(--brand-accent); border-width: 2px; }
+
+input[type=text], input[type=email], input[type=password] {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  margin-bottom: 12px;
+}
+
+.verse-badge {
+  display: inline-block;
+  background: rgba(201, 164, 95, 0.15);
+  color: var(--brand-primary);
+  border: 1px solid var(--brand-accent);
+  border-radius: 20px;
+  padding: 3px 10px;
+  font-size: 0.75rem;
+}

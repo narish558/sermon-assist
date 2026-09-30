@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>{{ sermon.title }}</h2>
+<p><small>{{ sermon.preached_at.strftime('%d %b %Y') }}</small></p>
+
+<div class="card">
+  <h3>Key points</h3>
+  <p>{{ sermon.notes }}</p>
+</div>
+
+<div class="card">
+  <h3>Scriptures used</h3>
+  {% for v in sermon.verses %}
+    <p><span class="verse-badge">{{ v.reference }} ({{ v.version }})</span> — {{ v.text }}</p>
+  {% endfor %}
+</div>
+{% endblock %}
