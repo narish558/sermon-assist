@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><title>Sermon Assist — Control</title>
+<style>
+  :root{--primary:#1B3A52;--accent:#9CA3AA;--line:#e4e0d4;}
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:-apple-system,Arial,sans-serif;background:#faf9f6;color:#1c1c1c;padding:24px;}
+  .navbar{background:var(--primary);color:#fff;padding:12px 20px;border-radius:6px 6px 0 0;
+    display:flex;justify-content:space-between;align-items:center;font-size:0.9rem;}
+  .card{background:#fff;border:1px solid var(--line);border-radius:0 0 6px 6px;padding:18px 20px;margin-bottom:16px;}
+  h2{font-size:0.78rem;color:var(--primary);margin:0 0 10px;text-transform:uppercase;letter-spacing:0.5px;}
+  .transcript{font-size:0.95rem;line-height:1.6;opacity:0.8;border-left:2px solid var(--line);padding-left:12px;min-height:2.5em;}
+  .match-card{background:rgba(156,163,170,0.12);border:1px solid var(--accent);border-radius:4px;padding:14px 16px;}
+  .match-ref{font-size:0.72rem;color:var(--primary);font-weight:600;margin-bottom:6px;}
+  .match-text{font-size:1rem;margin-bottom:12px;}
+  button{font-size:0.8rem;padding:8px 16px;border-radius:4px;border:1px solid var(--primary);cursor:pointer;}
+  .btn-primary{background:var(--primary);color:#fff;}
+  .btn-secondary{background:transparent;color:var(--primary);}
+  .btn-danger{background:#c0392b;color:#fff;border-color:#c0392b;}
+  .mode-row{display:flex;gap:8px;align-items:center;font-size:0.82rem;margin-bottom:6px;}
+  .pill{padding:5px 12px;border-radius:20px;border:1px solid var(--line);cursor:pointer;font-size:0.75rem;}
+  .pill.selected{background:var(--primary);color:#fff;border-color:var(--primary);}
+  .empty{opacity:0.5;font-size:0.85rem;}
+  .note{font-size:0.72rem;opacity:0.6;margin-top:8px;}
+  select{padding:6px 10px;border-radius:4px;border:1px solid var(--line);font-size:0.8rem;}
+</style></head>
+<body>
+  <div class="navbar"><span>DranyTech Sermon Assist — Control</span><span id="status">● listening</span></div>
+
+  <div class="card">
+    <h2>Mode</h2>
+    <div class="mode-row">
+      <span class="pill" id="pill-assisted">Assisted (I approve each verse)</span>
+      <span class="pill" id="pill-autonomous">Autonomous (no operator)</span>
+    </div>
+    <div class="note">Automation applies only to scripture detection/projection — never to notes.</div>
+  </div>
+
+  <div class="card">
+    <h2>Live transcript (local, offline)</h2>
+    <div class="transcript" id="transcript">Waiting for speech...</div>
+  </div>
+
+  <div class="card">
+    <h2>Detected scripture</h2>
+    <div id="match-area"><div class="empty">No match pending.</div></div>
+  </div>
+
+  <div class="card">
+    <h2>Bible version</h2>
+    <select id="version-select">
+      <option>KJV</option><option>NIV</option><option>ESV</option><option>NKJV</option>
+    </select>
+    <button class="btn-danger" style="float:right;" id="clear-btn">Clear projection</button>
+  </div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+function setMode(mode){
+  fetch('/api/mode', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({mode})});
+}
+$('pill-assisted').onclick = () => setMode('assisted');
+$('pill-autonomous').onclick = () => setMode('autonomous');
+$('version-select').onchange = e => {
+  fetch('/api/version', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({version:e.target.value})});
+};
+$('clear-btn').onclick = () => fetch('/api/clear', {method:'POST'});
+
+function approve(){ fetch('/api/approve', {method:'POST'}).then(render); }
+function dismiss(){ fetch('/api/dismiss', {method:'POST'}).then(render); }
+
+async function render(){
+  const res = await fetch('/api/state');
+  const s = await res.json();
+
+  $('transcript').textContent = s.transcript_tail || 'Waiting for speech...';
+  $('version-select').value = s.version;
+  $('pill-assisted').classList.toggle('selected', s.mode === 'assisted');
+  $('pill-autonomous').classList.toggle('selected', s.mode === 'autonomous');
+
+  const area = $('match-area');
+  if (s.mode === 'assisted' && s.pending_match) {
+    const m = s.pending_match;
+    area.innerHTML = `
+      <div class="match-card">
+        <div class="match-ref">DETECTED · ${m.reference} · confidence ${(m.confidence*100).toFixed(0)}%</div>
+        <div class="match-text">${m.text}</div>
+        <button class="btn-primary" onclick="approve()">Project now</button>
+        <button class="btn-secondary" onclick="dismiss()">Dismiss</button>
+      </div>`;
+  } else if (s.mode === 'autonomous') {
+    area.innerHTML = `<div class="empty">Autonomous mode — matches above the confidence threshold project automatically. Nothing needs your approval.</div>`;
+  } else {
+    area.innerHTML = `<div class="empty">No match pending.</div>`;
+  }
+}
+setInterval(render, 1000);
+render();
+</script>
+</body></html>
